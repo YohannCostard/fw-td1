@@ -56,7 +56,7 @@ Routes can also be associated more conventionally with an action of a controller
 
 The method ``FooController::index()`` will be accessible via the url ``/bar``.
 
-In this case, the **FooController** must be a class inheriting from **Ubiquity\controllers\Controller** or one of its subclasses,
+In this case, the **FooController** must be a class inheriting from **Ubiquity\\controllers\\Controller** or one of its subclasses,
 and must have an **index** method:
 
 .. code-block:: php
@@ -291,6 +291,62 @@ The defined route matches these urls:
 but not with that one:
   - ``products/all/test``
   
+
+Parameter typing
+^^^^^^^^^^^^^^^^
+The route declaration takes into account the data types passed to the action, which avoids adding requirements for simple types (int, bool, float).
+
+.. tabs::
+
+   .. tab:: Attributes
+
+      .. code-block:: php
+         :linenos:
+         :caption: app/controllers/ProductsController.php
+         :emphasize-lines: 7
+
+         namespace controllers;
+
+         use Ubiquity\attributes\items\router\Route;
+
+         class ProductsController extends ControllerBase{
+            ...
+            #[Route('products/{productNumber}')]
+            public function one(int $productNumber){
+               // ...
+            }
+         }
+
+   .. tab:: Annotations
+
+      .. code-block:: php
+         :linenos:
+         :caption: app/controllers/ProductsController.php
+         :emphasize-lines: 6
+
+         namespace controllers;
+
+         class ProductsController extends ControllerBase{
+            ...
+            /**
+             * @route("products/{productNumber}")
+             */
+            public function one(int $productNumber){
+               // ...
+            }
+         }
+
+The defined route matches these urls:
+  - ``products/1``
+  - ``products/20`` 
+but not with that one:
+  - ``products/test``
+  
+
+Correct values by data type:
+  - ``int``: ``1``...
+  - ``bool``: ``0`` or ``1``
+  - ``float``: ``1`` ``1.0`` ...
 
 Route http methods
 ^^^^^^^^^^^^^^^^^^
@@ -643,6 +699,108 @@ The **inherited** attribute defines the 2 routes defined in **ProductsBase**:
 
 
 If the **automated** and **inherited** attributes are combined, the base class actions are also added to the routes.
+
+Global route parameters
+~~~~~~~~~~~~~~~~~~~~~~~
+The global part of a route can define parameters, which will be passed in all generated routes. |br|
+These parameters can be retrieved through a public data member:
+
+.. tabs::
+
+   .. tab:: Attributes
+
+        .. code-block:: php
+           :linenos:
+           :caption: app/controllers/FooController.php
+           :emphasize-lines: 5
+
+           namespace controllers;
+
+           use Ubiquity\attributes\items\router\Route;
+
+           #[Route('/foo/{bar}',automated: true)]
+           class FooController {
+
+              public string $bar;
+
+              public function display(){
+                  echo $this->bar;
+              }
+
+           }
+
+   .. tab:: Annotations
+
+        .. code-block:: php
+           :linenos:
+           :caption: app/controllers/FooController.php
+           :emphasize-lines: 4
+
+           namespace controllers;
+
+           /**
+            * @route("/foo/{bar}","automated"=>true)
+            */
+           class FooController {
+
+              public string $bar;
+
+              public function display(){
+                  echo $this->bar;
+              }
+
+           }
+
+Accessing the url ``/foo/bar/display`` displays the contents of the bar member.
+
+Route without global prefix
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If the global route is defined on a controller, all the generated routes in this controller are preceded by the prefix. |br|
+It is possible to explicitly introduce exceptions on some routes, using the ``#/`` prefix.
+
+.. tabs::
+
+   .. tab:: Attributes
+
+        .. code-block:: php
+           :linenos:
+           :caption: app/controllers/FooController.php
+           :emphasize-lines: 8
+
+           namespace controllers;
+
+           use Ubiquity\attributes\items\router\Route;
+
+           #[Route('/foo',automated: true)]
+           class FooController {
+
+              #[Route('#/noRoot')]
+              public function noRoot(){}
+
+           }
+
+   .. tab:: Annotations
+
+        .. code-block:: php
+           :linenos:
+           :caption: app/controllers/FooController.php
+           :emphasize-lines: 9
+
+           namespace controllers;
+
+           /**
+            * @route("/foo","automated"=>true)
+            */
+           class FooController {
+
+             /**
+              * @route("#/noRoot")
+              */
+              public function noRoot(){}
+
+           }
+
+The controller defines the ``/noRoot`` url, which is not prefixed with the ``/foo`` part.
 
 Route priority
 ^^^^^^^^^^^^^^

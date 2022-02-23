@@ -1,2 +1,2 @@
 <?php
-return array();
+return array("Todos"=>["/Todos/delete/(.+?)/"]);

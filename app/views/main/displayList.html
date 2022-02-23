@@ -1,1 +1,11 @@
-uhujvdkdbgBVkj
+<div class="ui inverted segment">
+    <div class="ui label inverted">{{title}}</div>
+    <form action="{{path('todos.addElement')}}" method="post">
+        <input type="text" name="elm">
+    </form>
+    <div class="ui segment">
+        {% for elm in list %}
+        <div>{{elm}} <a href="{{path('todos.delete',[loop.index0])}}">Delete</a></div>
+        {% endfor %}
+    </div>
+</div>

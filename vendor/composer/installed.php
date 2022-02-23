@@ -1,22 +1,22 @@
 <?php return array(
     'root' => array(
-        'pretty_version' => '1.0.0+no-version-set',
-        'version' => '1.0.0.0',
+        'pretty_version' => 'dev-main',
+        'version' => 'dev-main',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
-        'reference' => NULL,
+        'reference' => 'f220e1f42b78f311ca4f6ecd8f7527c00a0e9931',
         'name' => '__root__',
         'dev' => true,
     ),
     'versions' => array(
         '__root__' => array(
-            'pretty_version' => '1.0.0+no-version-set',
-            'version' => '1.0.0.0',
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
-            'reference' => NULL,
+            'reference' => 'f220e1f42b78f311ca4f6ecd8f7527c00a0e9931',
             'dev_requirement' => false,
         ),
         'czproject/git-php' => array(
@@ -56,12 +56,14 @@
             'dev_requirement' => false,
         ),
         'phpmv/ubiquity' => array(
-            'pretty_version' => '2.4.9',
-            'version' => '2.4.9.0',
+            'pretty_version' => 'dev-master',
+            'version' => 'dev-master',
             'type' => 'framework',
             'install_path' => __DIR__ . '/../phpmv/ubiquity',
-            'aliases' => array(),
-            'reference' => '6e4e41bbbcbb727fc2afc9866f7aa63f1e2cbc6e',
+            'aliases' => array(
+                0 => '2.4.x-dev',
+            ),
+            'reference' => 'fc548751607786efd4a75a08edd1a532660717fc',
             'dev_requirement' => false,
         ),
         'phpmv/ubiquity-attributes' => array(

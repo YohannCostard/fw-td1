@@ -9,6 +9,7 @@ use Ubiquity\utils\http\UCookie;
 trait AuthControllerOverrideTrait {
 	
 	abstract public function badLogin();
+	abstract public function bad2FACode();
 	
 	/**
 	 * To override
@@ -26,15 +27,50 @@ trait AuthControllerOverrideTrait {
 	abstract protected function _connect();
 	
 	/**
+	 * To override
+	 * For creating a new user account.
+	 */
+	protected function _create(string $login,string $password):?bool{
+		return false;
+	}
+	
+	/**
 	 * @param object $connected
 	 */
 	abstract protected function onConnect($connected);
 	
 	/**
-	 * To override for defining a new action when creditentials are invalid
+	 * To override for defining a new action when creditentials are invalid.
 	 */
 	protected function onBadCreditentials(){
 		$this->badLogin();
+	}
+	
+	/**
+	 * To override for defining a new action when 2FA code is invalid.
+	 */
+	protected function onBad2FACode(){
+		$this->bad2FACode();
+	}
+	
+	/**
+	 * To override
+	 * Send the 2FA code to the user (email, sms, phone call...)
+	 * @param string $code
+	 * @param mixed $connected
+	 */
+	protected function _send2FACode(string $code,$connected){
+		
+	}
+	
+	/**
+	 * To override
+	 * Returns true if the creation of $accountName is possible.
+	 * @param string $accountName
+	 * @return bool
+	 */
+	protected function newAccountCreationRule(string $accountName):?bool{
+		
 	}
 	
 	/**

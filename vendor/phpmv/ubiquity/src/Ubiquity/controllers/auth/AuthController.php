@@ -12,6 +12,9 @@ use Ubiquity\controllers\Startup;
 use Ajax\service\Javascript;
 use Ubiquity\utils\http\UCookie;
 use Ubiquity\controllers\semantic\InsertJqueryTrait;
+use Ajax\semantic\html\collections\form\HtmlForm;
+use Ajax\semantic\components\validation\Rule;
+use Ajax\php\ubiquity\JsUtils;
 
 /**
  * Controller Auth
@@ -57,7 +60,41 @@ abstract class AuthController extends Controller {
 				return;
 			}
 		}
-		$this->authLoadView ( $this->_getFiles ()->getViewIndex (), [ "action" => $this->getBaseUrl () . "/connect","loginInputName" => $this->_getLoginInputName (),"loginLabel" => $this->loginLabel (),"passwordInputName" => $this->_getPasswordInputName (),"passwordLabel" => $this->passwordLabel (),"rememberCaption" => $this->rememberCaption () ] );
+		if($this->useAjax()){
+			$this->_addFrmAjaxBehavior('frm-login');
+		}
+		$vData=[ "action" => $this->getBaseUrl () . "/connect","loginInputName" => $this->_getLoginInputName (),"loginLabel" => $this->loginLabel (),"passwordInputName" => $this->_getPasswordInputName (),"passwordLabel" => $this->passwordLabel (),"rememberCaption" => $this->rememberCaption () ];
+		$this->addAccountCreationViewData($vData,true);
+		$this->authLoadView ( $this->_getFiles ()->getViewIndex (), $vData );
+	}
+	
+	public function addAccount(){
+		if($this->hasAccountCreation()){
+			if($this->useAjax()){
+				$frm=$this->_addFrmAjaxBehavior('frm-create');
+				$passwordInputName=$this->_getPasswordInputName();
+				$frm->addExtraFieldRules($passwordInputName.'-conf', ['empty',"match[$passwordInputName]"]);
+				if($this->newAccountCreationRule('')!==null){
+					$this->jquery->exec(Rule::ajax($this->jquery, 'checkAccount', $this->getBaseUrl () . '/_newAccountCreationRule', '{}', 'result=data.result;', 'postForm', [
+									'form' => 'frm-create'
+							]), true);
+					$frm->addExtraFieldRule($this->_getLoginInputName(), 'checkAccount','Account {value} is not available!');
+				}
+			}
+			$this->authLoadView ( $this->_getFiles ()->getViewCreate(), [ 'action' => $this->getBaseUrl () . '/createAccount','loginInputName' => $this->_getLoginInputName (),'loginLabel' => $this->loginLabel (),'passwordInputName' => $this->_getPasswordInputName (),'passwordLabel' => $this->passwordLabel (),'passwordConfLabel'=>$this->passwordConfLabel(),'rememberCaption' => $this->rememberCaption () ] );
+		}
+	}
+	
+
+	public function createAccount(){
+		$account=URequest::post($this->_getLoginInputName());
+		if($this->_create($account,URequest::post($this->_getPasswordInputName()))){
+			$msg=new FlashMessage ( "<b>{account}</b> account created with success!", "Account creation", "success", "check square" );
+		}else{
+			$msg=new FlashMessage ( "The account <b>{account}</b> is not created!", "Account creation", "error", "warning circle" );
+		}
+		$message=$this->fMessage($msg->parseContent(['account'=>$account]));
+		$this->authLoadView ( $this->_getFiles ()->getViewNoAccess (), [ "_message" => $message,"authURL" => $this->getBaseUrl (),"bodySelector" => $this->_getBodySelector (),"_loginCaption" => $this->_loginCaption ] );
 	}
 
 	/**
@@ -82,12 +119,15 @@ abstract class AuthController extends Controller {
 		$fMessage = $this->_noAccessMsg;
 		$this->noAccessMessage ( $fMessage );
 		$message = $this->fMessage ( $fMessage->parseContent ( [ "url" => implode ( "/", $urlParts ) ] ) );
+		
 		if (URequest::isAjax ()) {
 			$this->jquery->get ( $this->_getBaseRoute () . "/info/f", "#_userInfo", [ "historize" => false,"jqueryDone" => "replaceWith","hasLoader" => false,"attr" => "" ] );
 			$this->jquery->compile ( $this->view );
 		}
-
-		$this->authLoadView ( $this->_getFiles ()->getViewNoAccess (), [ "_message" => $message,"authURL" => $this->getBaseUrl (),"bodySelector" => $this->_getBodySelector (),"_loginCaption" => $this->_loginCaption ] );
+		
+		$vData=[ "_message" => $message,"authURL" => $this->getBaseUrl (),"bodySelector" => $this->_getBodySelector (),"_loginCaption" => $this->_loginCaption ];
+		$this->addAccountCreationViewData($vData);
+		$this->authLoadView ( $this->_getFiles ()->getViewNoAccess (), $vData);
 	}
 
 	/**
@@ -102,7 +142,15 @@ abstract class AuthController extends Controller {
 				if (USession::exists ( $this->_attemptsSessionKey )) {
 					USession::delete ( $this->_attemptsSessionKey );
 				}
-				$this->onConnect ( $connected );
+				if($this->has2FA($connected)){
+					$this->initializeAuth();
+					USession::set($this->_getUserSessionKey().'-2FA', $connected);
+					$this->save2FACode();
+					$this->confirm();
+					$this->finalizeAuth();
+				}else{
+					$this->onConnect ( $connected );
+				}
 			} else {
 				$this->_invalid=true;
 				$this->initializeAuth();
@@ -138,6 +186,14 @@ abstract class AuthController extends Controller {
 		}
 		$message = $this->fMessage ( $fMessage, "bad-login" ) . $attemptsMessage;
 		$this->authLoadView ( $this->_getFiles ()->getViewNoAccess (), [ "_message" => $message,"authURL" => $this->getBaseUrl (),"bodySelector" => $this->_getBodySelector (),"_loginCaption" => $this->_loginCaption ] );
+	}
+	
+	public function bad2FACode(){
+		$this->confirm();
+		$fMessage = new FlashMessage ( "Invalid 2FA code!", "Two Factor Authentification", "warning", "warning circle" );
+		$this->twoFABadCodeMessage( $fMessage );
+		$message = $this->fMessage ( $fMessage, "bad-code" );
+		$this->authLoadView ( $this->_getFiles ()->getViewBadTwoFACode(), [ "_message" => $message,"url" => $this->getBaseUrl ().'/sendNew2FACode',"bodySelector" => '#bad-two-fa',"_btCaption" => 'Send new code' ] );
 	}
 
 	/**
@@ -176,6 +232,50 @@ abstract class AuthController extends Controller {
 			$displayInfoAsString = $this->_displayInfoAsString ();
 		}
 		return $this->loadView ( $this->_getFiles ()->getViewInfo (), [ "connected" => USession::get ( $this->_getUserSessionKey () ),"authURL" => $this->getBaseUrl (),"bodySelector" => $this->_getBodySelector () ], $displayInfoAsString );
+	}
+	
+	public function confirm(){
+		$fMessage = new FlashMessage ( "Enter the rescue code and validate.", "Two factor Authentification", "info", "key" );
+		$this->twoFAMessage ( $fMessage );
+		$message = $this->fMessage ( $fMessage );
+		if($this->useAjax()){
+			$frm=$this->jquery->semantic()->htmlForm('frm-valid-code');
+			$frm->addExtraFieldRule('code','empty');
+			$frm->setValidationParams(['inline'=>true,'on'=>'blur']);
+		}
+		$this->authLoadView ( $this->_getFiles ()->getViewStepTwo(), [ "_message" => $message,"submitURL" => $this->getBaseUrl ().'/submitCode',"bodySelector" => $this->_getBodySelector(),'prefix'=>$this->towFACodePrefix() ] );
+	}
+	
+	protected function save2FACode(){
+		$code=USession::get('2FACode',$this->generate2FACode());
+		USession::set('2FACode',$code);
+		return $code;
+	}
+	
+	public function submitCode(){
+		if(URequest::isPost()){
+			if(USession::get('2FACode')===URequest::post('code')){
+				$this->onConnect(USession::get($this->_getUserSessionKey().'-2FA'));
+			}
+			else{
+				$this->_invalid=true;
+				$this->initializeAuth();
+				$this->onBad2FACode();
+				$this->finalizeAuth();
+			}
+		}
+	}
+	
+	public function send2FACode(){
+		$code=$this->save2FACode();
+		$this->_send2FACode($code, USession::get($this->_getUserSessionKey().'-2FA'));
+	}
+	
+	public function sendNew2FACode(){
+		$this->send2FACode();
+		$fMessage = new FlashMessage ( "A new code was submited.", "Two factor Authentification", "success", "key" );
+		$this->newTwoFACodeMessage ( $fMessage );
+		echo $this->fMessage ( $fMessage );
 	}
 
 	public function checkConnection() {
@@ -235,7 +335,7 @@ abstract class AuthController extends Controller {
 			if(Startup::getAction()!=='connect') {
 				$this->finalizeAuth();
 			}
-			$this->jquery->execAtLast ( "if($('#_userInfo').length){\$('#_userInfo').html(" . preg_replace ( "/$\R?^/m", "", Javascript::prep_element ( $this->info () ) ) . ");}" );
+			$this->jquery->execAtLast ( "if($('#_userInfo').length){\$('#_userInfo').replaceWith(" . preg_replace ( "/$\R?^/m", "", Javascript::prep_element ( $this->info () ) ) . ");}" );
 			if ($this->_compileJS) {
 				echo $this->jquery->compile ();
 			}
@@ -271,5 +371,19 @@ abstract class AuthController extends Controller {
 			$finalize = $initialize;
 		}
 		Startup::forward ( $url, $initialize, $finalize );
+	}
+	
+	public function _addAjaxBehavior(JsUtils $jquery=null,$ajaxParameters=['hasLoader'=>'$(this).children(".button")','historize'=>false,'listenerOn'=>'body']){
+		$jquery??=$this->jquery;
+		$jquery->getHref('.ajax[data-target]','', $ajaxParameters);
+		$jquery->postFormAction('.ui.form',$this->_getBodySelector(),$ajaxParameters);
+	}
+
+	public function _addFrmAjaxBehavior($id):HtmlForm{
+		$frm=$this->jquery->semantic()->htmlForm($id);
+		$frm->addExtraFieldRule($this->_getLoginInputName(),'empty');
+		$frm->addExtraFieldRule($this->_getPasswordInputName(),'empty');
+		$frm->setValidationParams(['inline'=>true,'on'=>'blur']);
+		return $frm;
 	}
 }

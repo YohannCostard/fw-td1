@@ -47,10 +47,57 @@ trait AuthControllerVariablesTrait {
 	 */
 	protected function disconnectedMessage(FlashMessage $fMessage) {
 	}
+	
+	/**
+	 * To override for modifying the account creation message.
+	 *
+	 * @param FlashMessage $fMessage
+	 */
+	protected function createAccountMessage(FlashMessage $fMessage) {
+	}
+	
+	/**
+	 * To override for modifying the account creation message information.
+	 *
+	 * @param FlashMessage $fMessage
+	 */
+	protected function canCreateAccountMessage(FlashMessage $fMessage) {
+	}
+	
+	/**
+	 * To override for modifying the error for account creation.
+	 *
+	 * @param FlashMessage $fMessage
+	 */
+	protected function createAccountErrorMessage(FlashMessage $fMessage) {
+	}
+	
+	/**
+	 * To override for modifying the 2FA panel message.
+	 * @param FlashMessage $fMessage
+	 */
+	protected function twoFAMessage(FlashMessage $fMessage){
+		
+	}
+	/**
+	 * To override
+	 * @param FlashMessage $fMessage
+	 */
+	protected function newTwoFACodeMessage(FlashMessage $fMessage){
+		
+	}
+	
+	/**
+	 * To override for modifying the message displayed if the 2FA code is bad.
+	 * @param FlashMessage $fMessage
+	 */
+	protected function twoFABadCodeMessage(FlashMessage $fMessage){
+		
+	}
 
 	/**
 	 * To override
-	 * Returns the maximum number of allowed login attempts
+	 * Returns the maximum number of allowed login attempts.
 	 */
 	protected function attemptsNumber() {
 		return;
@@ -59,7 +106,7 @@ trait AuthControllerVariablesTrait {
 	/**
 	 * To override
 	 * Returns the time before trying to connect again
-	 * Effective only if attemptsNumber return a number
+	 * Effective only if attemptsNumber return a number.
 	 *
 	 * @return number
 	 */
@@ -80,11 +127,11 @@ trait AuthControllerVariablesTrait {
 	}
 
 	public function _getLoginInputName() {
-		return "email";
+		return 'email';
 	}
 
 	protected function loginLabel() {
-		return ucfirst ( $this->_getLoginInputName () );
+		return \ucfirst ( $this->_getLoginInputName () );
 	}
 
 	public function _getPasswordInputName() {
@@ -92,7 +139,11 @@ trait AuthControllerVariablesTrait {
 	}
 
 	protected function passwordLabel() {
-		return ucfirst ( $this->_getPasswordInputName () );
+		return \ucfirst ( $this->_getPasswordInputName () );
+	}
+	
+	protected function passwordConfLabel() {
+		return \ucfirst ( $this->_getPasswordInputName () ).' confirmation';
 	}
 
 	/**
@@ -107,6 +158,35 @@ trait AuthControllerVariablesTrait {
 
 	protected function rememberCaption() {
 		return 'Remember me';
+	}
+	/**
+	 * Returns true for account creation.
+	 * @return boolean
+	 */
+	protected function hasAccountCreation(){
+		return false;
+	}
+	
+	/**
+	 * To override
+	 * Returns true for a two factor authentification for this account.
+	 * @param mixed $accountValue
+	 * @return bool
+	 */
+	protected function has2FA($accountValue=null):bool{
+		return false;
+	}
+	
+	/**
+	 * 
+	 * @return string
+	 */
+	protected function generate2FACode():string{
+		return \substr(\md5(\uniqid(\rand(), true)), 4, 4);
+	}
+	
+	protected function towFACodePrefix():string{
+		return 'U-';
 	}
 }
 

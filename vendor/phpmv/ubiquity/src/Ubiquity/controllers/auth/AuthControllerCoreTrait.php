@@ -5,6 +5,7 @@ namespace Ubiquity\controllers\auth;
 use Ubiquity\utils\http\URequest;
 use Ubiquity\utils\http\USession;
 use Ubiquity\utils\flash\FlashMessage;
+use Ubiquity\utils\http\UResponse;
 
 /**
  *
@@ -24,9 +25,13 @@ trait AuthControllerCoreTrait {
 	abstract public function _getBodySelector();
 
 	abstract public function _getBaseRoute();
-
+	
 	protected function getBaseUrl() {
 		return URequest::getUrl ( $this->_getBaseRoute () );
+	}
+	
+	protected function useAjax():bool{
+		return true;
 	}
 
 	public function message($type, $header, $body, $icon = "info", $id = null) {
@@ -36,6 +41,15 @@ trait AuthControllerCoreTrait {
 	protected function fMessage(FlashMessage $fMessage, $id = null) {
 		return $this->message ( $fMessage->getType (), $fMessage->getTitle (), $fMessage->getContent (), $fMessage->getIcon (), $id );
 	}
+	
+	public function _newAccountCreationRule(){
+		if (URequest::isPost()) {
+			$result = [];
+			UResponse::asJSON();
+			$result['result'] = $this->newAccountCreationRule(URequest::post($this->_getLoginInputName()));
+			echo \json_encode($result);
+		}
+	}
 
 	protected function noAttempts() {
 		$timeout = $this->attemptsTimeout ();
@@ -44,13 +58,13 @@ trait AuthControllerCoreTrait {
 			$this->jquery->exec ( "$('._login').addClass('disabled');", true );
 			$plus = " You can try again {_timer}";
 			$this->jquery->exec ( "var startTimer=function(duration, display) {var timer = duration, minutes, seconds;
-    										var interval=setInterval(function () {
-        										minutes = parseInt(timer / 60, 10);seconds = parseInt(timer % 60, 10);
-										        minutes = minutes < 10 ? '0' + minutes : minutes;
-        										seconds = seconds < 10 ? '0' + seconds : seconds;
-										        display.html(minutes + ':' + seconds);
-										        if (--timer < 0) {clearInterval(interval);$('#timeout-message').hide();$('#bad-login').removeClass('attached');$('._login').removeClass('disabled');}
-    										}, 1000);
+											var interval=setInterval(function () {
+												minutes = parseInt(timer / 60, 10);seconds = parseInt(timer % 60, 10);
+												minutes = minutes < 10 ? '0' + minutes : minutes;
+												seconds = seconds < 10 ? '0' + seconds : seconds;
+												display.html(minutes + ':' + seconds);
+												if (--timer < 0) {clearInterval(interval);$('#timeout-message').hide();$('#bad-login').removeClass('attached');$('._login').removeClass('disabled');}
+											}, 1000);
 										}", true );
 			$timeToLeft = USession::getTimeout ( $this->_attemptsSessionKey );
 			$this->jquery->exec ( "startTimer({$timeToLeft},$('#timer'));", true );
@@ -60,14 +74,19 @@ trait AuthControllerCoreTrait {
 	}
 
 	protected function authLoadView($viewName, $vars = [ ]) {
+		if($this->useAjax()){
+			$loadView=function($vn,$v){$this->jquery->renderView($vn,$v);};
+		}else{
+			$loadView=function($vn,$v) {$this->loadView($vn, $v);};
+		}
 		$files = $this->_getFiles ();
 		$mainTemplate = $files->getBaseTemplate ();
 		if (isset ( $mainTemplate )) {
 			$vars ["_viewname"] = $viewName;
 			$vars ["_base"] = $mainTemplate;
-			$this->loadView ( $files->getViewBaseTemplate (), $vars );
+			$loadView ( $files->getViewBaseTemplate (), $vars );
 		} else {
-			$this->loadView ( $viewName, $vars );
+			$loadView ( $viewName, $vars );
 		}
 	}
 
@@ -84,6 +103,19 @@ trait AuthControllerCoreTrait {
 
 	protected function getViewVars($viewname) {
 		return [ "authURL" => $this->getBaseUrl (),"bodySelector" => $this->_getBodySelector (),"_loginCaption" => $this->_loginCaption ];
+	}
+	
+	protected function addAccountCreationViewData(array &$vData,$forMessage=false){
+		if($this->hasAccountCreation()){
+			if($forMessage){
+				$fMessage = new FlashMessage ( "<p>You can create one now!</p><a href='{createAccountUrl}' class='ui button black ajax _create' data-target='{accountCreationTarget}'>Create account</a>", "Don't have an account yet?", "", "question" );
+				$this->canCreateAccountMessage ( $fMessage->parseContent(['accountCreationTarget'=>$this->_getBodySelector(),'createAccountUrl'=>$this->getBaseUrl().'/addAccount']) );
+				$vData['canCreateAccountMessage'] = $this->fMessage ( $fMessage );
+			}else{
+				$vData['createAccountUrl']=$this->getBaseUrl().'/addAccount';
+				$vData['accountCreationTarget']=$this->_getBodySelector();
+			}
+		}
 	}
 }
 

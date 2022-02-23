@@ -1,2 +1,2 @@
 <?php
-return array("/_default/"=>["controller"=>"controllers\\TodosController","action"=>"index","parameters"=>[],"name"=>"todos.index","cache"=>false,"duration"=>0]);
+return array("/_default/"=>["controller"=>"controllers\\TodosController","action"=>"index","parameters"=>[],"name"=>"todos.index","cache"=>false,"duration"=>0],"/Todos/add/"=>["post"=>["controller"=>"controllers\\TodosController","action"=>"addElement","parameters"=>[],"name"=>"todos.addElement","cache"=>false,"duration"=>0]],"/Todos/delete/(.+?)/"=>["get"=>["controller"=>"controllers\\TodosController","action"=>"deleteElement","parameters"=>[0],"name"=>"todos.delete","cache"=>false,"duration"=>0]]);
