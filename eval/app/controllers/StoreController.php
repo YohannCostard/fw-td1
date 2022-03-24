@@ -16,10 +16,17 @@ class StoreController extends \controllers\ControllerBase{
         $this->loadView('main/StoreController.html',compact("Section"));
 	}
 
-    #[Route(path: "section/{id}",name: "section")]
+    #[Route(path: "Store/section/{id}",name: "section")]
     public function section($id){
         $Section=DAO::getById(Section::class,$id+1);
         $Product=$Section->getProducts();
         $this->loadView('main/Produits.html',compact("Section","Product"));
     }
+
+    #[Route(path: "Store/allproducts",name: "products")]
+    public function products(){
+        $Product=DAO::getAll(Product::class);
+        $this->loadView('main/Produits.html',compact("Product"));
+    }
+
 }

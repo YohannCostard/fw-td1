@@ -5,15 +5,18 @@
     <title>Title</title>
 </head>
 <body>
-    {% for pro in Product %}
-        <div class="ui card">
-            {{img('store/'~pro.image~'.jpg')}}
-            {{pro.name}}
-                <ul>
-                    <li>{{pro.comments}}</li>
-                    <li>{{pro.price}}€</li>
-                </ul>
-            </div>
-    {% endfor %}
+    <div class="ui cards">
+        {% for pro in Product %}
+            <div class="ui card">
+                {{img('store/'~pro.image~'.jpg')}}
+                {{pro.name}}
+                    <ul>
+                        <li>{{pro.comments}}</li>
+                        <li>{{pro.price}}€</li>
+                    </ul>
+                    <a href="">Ajouter au panier</a>
+                </div>
+        {% endfor %}
+    </div>
 </body>
 </html>

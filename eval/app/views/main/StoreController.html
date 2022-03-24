@@ -5,10 +5,10 @@
     <title>Title</title>
 </head>
 <body>
-    <div style="display: flex; flex-wrap : wrap">
-        <div style="display: flex; flex-wrap : wrap">
+    <a href="{{path('products')}}">Voir tous les produits</a>
+
+    <div class="ui cards">
             {% for sec in Section %}
-            <div style="width: 30%; margin: 20px;" class="ui segment">
             <div class="ui card">
                 {{sec.name}}
                 <ul>
@@ -17,7 +17,7 @@
 
                 <a href="{{path('section',[loop.index0])}}">Consulter produits ()</a>
             </div>
-            </div>
             {% endfor %}
+    </div>
 </body>
 </html>

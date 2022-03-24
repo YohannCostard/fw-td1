@@ -1,2 +1,2 @@
 <?php
-return array("section"=>["/section/(.+?)/"]);
+return array("Store"=>["/Store/section/(.+?)/"]);
