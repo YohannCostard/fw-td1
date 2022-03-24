@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    {% for sec in Section %}
+        <div class="ui card">
+            {{sec.name}}
+            <ul>
+                <li>{{sec.description}}</li>
+            </ul>
+            <button>Consulter produits ()</button>
+        </div>
+    {% endfor %}
+</body>
+</html>
