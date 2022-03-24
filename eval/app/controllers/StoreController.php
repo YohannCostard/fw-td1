@@ -48,11 +48,15 @@ class StoreController extends \controllers\ControllerBase{
     public function initialize()
     {
         $count = 0;
+        $amount = 0;
         $list = USession::get(self::LIST_SESSION_KEY,[]);
-        foreach ($list as $produit){
-            $count = $count + $produit;
+        foreach ($list as $id => $nbproduit){
+            $count = $count + $nbproduit;
+            $produit=DAO::getById(Product::class,$id);
+            $amount = $amount + $nbproduit*($produit->getPrice());
         }
         $this->view->setVar('panier', $list);
+        $this->view->setVar('amount', $amount);
         $this->view->setVar('count', $count);
         parent::initialize();
     }
