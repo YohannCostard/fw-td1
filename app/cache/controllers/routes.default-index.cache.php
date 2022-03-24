@@ -1,2 +1,2 @@
 <?php
-return array("Todos"=>["/Todos/delete/(.+?)/"]);
+return array("(index"=>["/(index/)?"],"getOne"=>["/getOne/(.+?)/"]);

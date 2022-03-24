@@ -1,5 +1,5 @@
 <?php
-define('APP_ROOT', __DIR__ . '/../');
+define('APP_ROOT', __DIR__ . '/app/');
 include_once \APP_ROOT . './../vendor/phpmv/ubiquity/src/Ubiquity/cache/preloading/PreloaderInternalTrait.php';
 include_once \APP_ROOT . './../vendor/phpmv/ubiquity/src/Ubiquity/cache/Preloader.php';
 $config = include __DIR__ . '/preloader.config.php';
