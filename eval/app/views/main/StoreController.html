@@ -5,14 +5,19 @@
     <title>Title</title>
 </head>
 <body>
-    {% for sec in Section %}
-        <div class="ui card">
-            {{sec.name}}
-            <ul>
-                <li>{{sec.description}}</li>
-            </ul>
-            <button>Consulter produits ()</button>
-        </div>
-    {% endfor %}
+    <div style="display: flex; flex-wrap : wrap">
+        <div style="display: flex; flex-wrap : wrap">
+            {% for sec in Section %}
+            <div style="width: 30%; margin: 20px;" class="ui segment">
+            <div class="ui card">
+                {{sec.name}}
+                <ul>
+                    <li>{{sec.description}}</li>
+                </ul>
+
+                <a href="{{path('section',[loop.index0])}}">Consulter produits ()</a>
+            </div>
+            </div>
+            {% endfor %}
 </body>
 </html>
